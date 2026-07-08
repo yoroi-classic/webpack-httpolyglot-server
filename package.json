@@ -7,7 +7,9 @@
   "main": "lib/server.js",
   "files": ["lib", "ssl"],
   "scripts": {
-    "lint": "eslint lib bin example"
+    "lint": "eslint lib test",
+    "test": "node test/protocol.test.js",
+    "verify": "npm run lint && npm test"
   },
   "peerDependencies": {
     "webpack": ">= 2"
