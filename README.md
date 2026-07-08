@@ -2,15 +2,31 @@
 
 > Using [httpolyglot](https://github.com/mscdex/httpolyglot) to serve http/https over the same port for Webpack development server
 
+## Yoroi Classic maintenance
+
+This fork is maintained for the Yoroi Classic extension development toolchain. It is consumed from GitHub and is not published to npmjs.
+
 ## Why?
 
-The [React Chrome Extension Boilerplate](https://github.com/jhen0409/react-chrome-extension-boilerplate)  need a https webpack server on development mode ([Inject page](https://github.com/jhen0409/react-chrome-extension-boilerplate#development)), and we also need http for Window, Popup, Background features, I just don't want to open two webpack servers for that, so I made a tool, provide a easy way to achieve.
+The original package was created for the [React Chrome Extension Boilerplate](https://github.com/jhen0409/react-chrome-extension-boilerplate), which needed an HTTPS webpack server in development mode for injected pages while still serving HTTP for window, popup, and background pages. This package keeps those flows on one webpack development server.
 
 ## Installation
 
+Pin the owned fork as a Git dependency:
+
 ```bash
 $ npm i --save-dev webpack-hot-middleware
-$ npm i --save-dev webpack-httpolyglot-server
+$ npm i --save-dev git+https://github.com/yoroi-classic/webpack-httpolyglot-server.git
+```
+
+For reproducible builds, prefer a commit or branch ref in the consuming package:
+
+```json
+{
+  "devDependencies": {
+    "webpack-httpolyglot-server": "git+https://github.com/yoroi-classic/webpack-httpolyglot-server.git#master"
+  }
+}
 ```
 
 ## Usage
