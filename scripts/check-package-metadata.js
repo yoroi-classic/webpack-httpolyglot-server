@@ -6,7 +6,7 @@ var pkg = require('../package.json');
 function assertNoWildcardRange(name, range) {
   assert.equal(typeof range, 'string', name + ' range must be a string');
   assert.equal(
-    /(?:\*|[xX]|\blatest\b)/.test(range),
+    /(?:^|[.@/\s<>=~^|-])(?:\*|[xX]|latest)(?=$|[.@/\s<>=~^|-])/.test(range),
     false,
     name + ' range must not use wildcard components'
   );
