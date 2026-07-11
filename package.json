@@ -20,7 +20,7 @@
     "verify": "npm run check:metadata && npm run lint && npm test"
   },
   "peerDependencies": {
-    "webpack": "^5.101.0"
+    "webpack": "^5.0.0"
   },
   "dependencies": {
     "express": "^4.22.2",
@@ -32,6 +32,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "eslint": "^10.6.0",
+    "globals": "^17.7.0",
     "webpack": "^5.108.4"
   },
   "repository": {

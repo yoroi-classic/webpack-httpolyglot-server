@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import globals from 'globals';
 
 export default [
   {
@@ -7,15 +8,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
-      globals: {
-        clearTimeout: 'readonly',
-        console: 'readonly',
-        process: 'readonly',
-        setTimeout: 'readonly',
-        __dirname: 'readonly',
-        require: 'readonly',
-        module: 'readonly'
-      }
+      globals: globals.node
     }
   }
 ];
