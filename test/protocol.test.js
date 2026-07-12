@@ -1,10 +1,9 @@
-/* global Promise */
-
-var assert = require('assert');
+var assert = require('node:assert/strict');
 var fs = require('fs');
 var http = require('http');
 var https = require('https');
 var path = require('path');
+var test = require('node:test');
 
 var createServer = require('../lib/server');
 
@@ -19,33 +18,49 @@ function makeMiddleware(name) {
 
 function request(protocol, port, pathname, callback) {
   var client = protocol === 'https' ? https : http;
+  var req;
+  var settled = false;
+  var timer = setTimeout(function() {
+    if (req) {
+      req.destroy(new Error(protocol + ' request timed out'));
+    }
+  }, 5000);
+
+  function finish(err, result) {
+    if (settled) return;
+    settled = true;
+    clearTimeout(timer);
+    callback(err, result);
+  }
+
   var options = {
     hostname: '127.0.0.1',
     port: port,
     path: pathname,
-    method: 'GET'
+    method: 'GET',
+    agent: false
   };
   if (protocol === 'https') {
     options.ca = fs.readFileSync(path.join(__dirname, '../ssl/ca.crt'));
     options.servername = 'localhost';
   }
 
-  var req = client.request(options, function(res) {
+  req = client.request(options, function(res) {
     var body = '';
     res.setEncoding('utf8');
     res.on('data', function(chunk) {
       body += chunk;
     });
     res.on('end', function() {
-      callback(null, {
+      finish(null, {
         statusCode: res.statusCode,
         body: body
       });
     });
-    res.on('error', callback);
+    res.on('error', finish);
   });
 
-  req.on('error', callback);
+  req.on('error', finish);
   req.end();
 }
 
@@ -63,13 +78,31 @@ function requestAsync(protocol, port, pathname) {
 
 function closeAsync(server) {
   return new Promise(function(resolve, reject) {
+    if (!server.listening) {
+      resolve();
+      return;
+    }
+
+    var settled = false;
+    var timer = setTimeout(function() {
+      if (settled) return;
+      settled = true;
+      resolve();
+    }, 1000);
+
     server.close(function(err) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       if (err) {
         reject(err);
       } else {
         resolve();
       }
     });
+    if (typeof server.closeAllConnections === 'function') {
+      server.closeAllConnections();
+    }
   });
 }
 
@@ -87,13 +120,14 @@ function listeningAsync(server) {
   });
 }
 
-function main() {
+test('serves protocol middleware over http and https', async function() {
   var webpackCalls = [];
   var webpackConfig = {
     entry: './fixture-entry.js',
     devMiddleware: {publicPath: '/assets'},
     hotMiddleware: {path: '/hot'}
   };
+
   var app = createServer(
     webpackConfig,
     function(config) {
@@ -109,50 +143,36 @@ function main() {
     }
   );
 
-  assert(app.server);
-  assert.strictEqual(typeof app.server.close, 'function');
-  assert.strictEqual(webpackCalls.length, 1);
-  assert.deepStrictEqual(webpackCalls[0], {entry: './fixture-entry.js'});
+  try {
+    assert(app.server);
+    assert.strictEqual(typeof app.server.close, 'function');
+    await listeningAsync(app.server);
 
-  app.get('/protocol-test', function(req, res) {
-    res.status(200).send({
-      devMiddleware: req.headers['x-dev-middleware'],
-      hotMiddleware: req.headers['x-hot-middleware']
-    });
-  });
+    assert.strictEqual(webpackCalls.length, 1);
+    assert.deepStrictEqual(webpackCalls[0], {entry: './fixture-entry.js'});
 
-  return listeningAsync(app.server)
-    .then(function() {
-      var port = app.server.address().port;
-      return requestAsync('http', port, '/protocol-test')
-        .then(function(httpResult) {
-          assert.strictEqual(httpResult.statusCode, 200);
-          assert.deepStrictEqual(JSON.parse(httpResult.body), {
-            devMiddleware: '1',
-            hotMiddleware: '1'
-          });
-
-          return requestAsync('https', port, '/protocol-test');
-        });
-    })
-    .then(function(httpsResult) {
-      assert.strictEqual(httpsResult.statusCode, 200);
-      assert.deepStrictEqual(JSON.parse(httpsResult.body), {
-        devMiddleware: '1',
-        hotMiddleware: '1'
-      });
-    })
-    .then(function() {
-      return closeAsync(app.server);
-    })
-    .catch(function(err) {
-      return closeAsync(app.server).catch(function() {}).then(function() {
-        throw err;
+    app.get('/protocol-test', function(req, res) {
+      res.status(200).send({
+        devMiddleware: req.headers['x-dev-middleware'],
+        hotMiddleware: req.headers['x-hot-middleware']
       });
     });
-}
 
-main().catch(function(err) {
-  console.error(err);
-  process.exit(1);
+    var port = app.server.address().port;
+    var httpResult = await requestAsync('http', port, '/protocol-test');
+    assert.strictEqual(httpResult.statusCode, 200);
+    assert.deepStrictEqual(JSON.parse(httpResult.body), {
+      devMiddleware: '1',
+      hotMiddleware: '1'
+    });
+
+    var httpsResult = await requestAsync('https', port, '/protocol-test');
+    assert.strictEqual(httpsResult.statusCode, 200);
+    assert.deepStrictEqual(JSON.parse(httpsResult.body), {
+      devMiddleware: '1',
+      hotMiddleware: '1'
+    });
+  } finally {
+    await closeAsync(app.server);
+  }
 });

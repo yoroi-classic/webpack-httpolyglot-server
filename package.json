@@ -2,29 +2,38 @@
   "name": "webpack-httpolyglot-server",
   "version": "0.3.0",
   "private": true,
-  "description":
-    "Using httpolyglot to serve http/https over the same port for Webpack development server",
+  "description": "Using httpolyglot to serve http/https over the same port for Webpack development server",
   "main": "lib/server.js",
-  "files": ["lib", "ssl"],
+  "files": [
+    "lib",
+    "ssl"
+  ],
+  "engines": {
+    "node": ">=22.13.0 <23",
+    "npm": ">=10"
+  },
+  "packageManager": "npm@10.9.7",
   "scripts": {
-    "lint": "eslint lib test",
-    "test": "node test/protocol.test.js",
-    "verify": "npm run lint && npm test"
+    "check:metadata": "node scripts/check-package-metadata.js",
+    "lint": "eslint lib test scripts",
+    "test": "node --test test/*.test.js",
+    "verify": "npm run check:metadata && npm run lint && npm test"
   },
   "peerDependencies": {
-    "webpack": ">= 2"
+    "webpack": "^5.0.0"
   },
   "dependencies": {
-    "express": "^4.14.0",
-    "httpolyglot": "^0.1.1",
-    "lodash.omit": "^4.5.0",
-    "webpack-dev-middleware": "*",
-    "webpack-hot-middleware": "^2.12.2"
+    "express": "^4.22.2",
+    "httpolyglot": "^0.1.2",
+    "lodash.omit": "^4.18.0",
+    "webpack-dev-middleware": "^8.0.3",
+    "webpack-hot-middleware": "^2.26.1"
   },
   "devDependencies": {
-    "babel-eslint": "^6.1.2",
-    "eslint": "^3.4.0",
-    "webpack": "^1.13.2"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "webpack": "^5.108.4"
   },
   "repository": {
     "type": "git",
