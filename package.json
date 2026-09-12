@@ -23,7 +23,7 @@
     "webpack": "^5.0.0"
   },
   "dependencies": {
-    "express": "^4.22.2",
+    "express": "^5.2.1",
     "httpolyglot": "^0.1.2",
     "lodash.omit": "^4.18.0",
     "webpack-dev-middleware": "^8.0.3",
